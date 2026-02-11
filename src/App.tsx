@@ -1,56 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { questions } from './data/questions';
 import { QuestionCard } from './components/QuestionCard';
 import { Results } from './components/Results';
 import { calculateResults } from './utils/scoring';
 import { Layout } from './components/Layout';
 import { Header } from './components/Header';
-import { Auth } from './components/Auth';
-import { UserMenu } from './components/UserMenu';
-import { History } from './components/History';
-import { supabase } from './lib/supabase';
-import { Answer } from './types';
 
 function App() {
+  const { t } = useTranslation();
   const [answers, setAnswers] = useState<Map<number, number>>(new Map());
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [session, setSession] = useState(null);
-  const [showHistory, setShowHistory] = useState(false);
-  const [assessments, setAssessments] = useState([]);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (session?.user) {
-      fetchAssessments();
-    }
-  }, [session]);
-
-  const fetchAssessments = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('assessments')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      setAssessments(data || []);
-    } catch (error) {
-      console.error('Error fetching assessments:', error);
-    }
-  };
 
   const handleAnswer = (questionId: number, score: number) => {
     setAnswers(new Map(answers.set(questionId, score)));
@@ -59,23 +19,6 @@ function App() {
   const handleSubmit = async () => {
     if (answers.size === questions.length) {
       setIsSubmitted(true);
-      
-      if (session?.user) {
-        const results = calculateResults(answers);
-        try {
-          await supabase.from('assessments').insert([
-            {
-              user_id: session.user.id,
-              answers: Object.fromEntries(answers),
-              results: results,
-              created_at: new Date().toISOString(),
-            },
-          ]);
-          await fetchAssessments(); // Refresh assessments after submitting
-        } catch (error) {
-          console.error('Error saving results:', error);
-        }
-      }
     }
   };
 
@@ -89,19 +32,10 @@ function App() {
 
   return (
     <Layout>
-      {!session ? (
-        <Auth />
-      ) : (
-        <UserMenu 
-          userEmail={session.user.email}
-          onShowHistory={() => setShowHistory(true)}
-        />
-      )}
+      <Header />
       
       {!isSubmitted ? (
         <>
-          <Header />
-          
           <div className="space-y-6">
             {questions.map((question) => (
               <QuestionCard
@@ -124,20 +58,13 @@ function App() {
               }`}
             >
               {answers.size === questions.length
-                ? 'Lihat Hasil'
-                : `Jawab semua pertanyaan (${answers.size}/${questions.length})`}
+                ? t('submit_button')
+                : t('submit_button_progress', { answered: answers.size, total: questions.length })}
             </button>
           </div>
         </>
       ) : (
         <Results results={results} onReset={handleReset} />
-      )}
-
-      {showHistory && (
-        <History
-          assessments={assessments}
-          onClose={() => setShowHistory(false)}
-        />
       )}
     </Layout>
   );

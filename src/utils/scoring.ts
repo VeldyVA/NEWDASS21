@@ -2,27 +2,27 @@ import { Category, Result } from '../types';
 import { getRecommendation } from './recommendations';
 
 const getDepressionCondition = (score: number): string => {
-  if (score >= 14) return 'Sangat Parah';
-  if (score >= 11) return 'Parah';
-  if (score >= 7) return 'Sedang';
-  if (score >= 5) return 'Ringan';
-  return 'Normal';
+  if (score >= 14) return 'condition_very_severe';
+  if (score >= 11) return 'condition_severe';
+  if (score >= 7) return 'condition_moderate';
+  if (score >= 5) return 'condition_mild';
+  return 'condition_normal';
 };
 
 const getAnxietyCondition = (score: number): string => {
-  if (score >= 10) return 'Sangat Parah';
-  if (score >= 8) return 'Parah';
-  if (score >= 6) return 'Sedang';
-  if (score >= 4) return 'Ringan';
-  return 'Normal';
+  if (score >= 10) return 'condition_very_severe';
+  if (score >= 8) return 'condition_severe';
+  if (score >= 6) return 'condition_moderate';
+  if (score >= 4) return 'condition_mild';
+  return 'condition_normal';
 };
 
 const getStressCondition = (score: number): string => {
-  if (score >= 17) return 'Sangat Parah';
-  if (score >= 13) return 'Parah';
-  if (score >= 10) return 'Sedang';
-  if (score >= 8) return 'Ringan';
-  return 'Normal';
+  if (score >= 17) return 'condition_very_severe';
+  if (score >= 13) return 'condition_severe';
+  if (score >= 10) return 'condition_moderate';
+  if (score >= 8) return 'condition_mild';
+  return 'condition_normal';
 };
 
 const getCondition = (category: Category, score: number): string => {
@@ -44,13 +44,13 @@ export const calculateResults = (answers: Map<number, number>): Result[] => {
     const score = Array.from({ length: 7 }, (_, i) => answers.get(startId + i) || 0)
       .reduce((sum, score) => sum + score, 0);
     
-    const condition = getCondition(category, score);
+    const conditionKey = getCondition(category, score);
     
     return {
       category,
       score,
-      condition,
-      recommendation: getRecommendation(condition)
+      condition: conditionKey,
+      recommendation: getRecommendation(conditionKey)
     };
   });
 };
