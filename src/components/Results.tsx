@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Result } from '../types';
-import { AlertTriangle, Brain, HeartPulse } from 'lucide-react';
+import { AlertTriangle, Brain, HeartPulse, Download } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 const getCategoryIcon = (category: string) => {
   switch (category) {
@@ -48,6 +50,32 @@ interface ResultsProps {
 
 export const Results: React.FC<ResultsProps> = ({ results, onReset }) => {
   const { t } = useTranslation();
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  const handleExportPdf = async () => {
+    if (resultsRef.current) {
+      const canvas = await html2canvas(resultsRef.current, { scale: 2 });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 297; // A4 height in mm
+      const imgHeight = canvas.height * imgWidth / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      pdf.save('dass21_results.pdf');
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -60,7 +88,7 @@ export const Results: React.FC<ResultsProps> = ({ results, onReset }) => {
         </p>
       </div>
       
-      <div className="grid gap-6 md:grid-cols-3">
+      <div ref={resultsRef} className="grid gap-6 md:grid-cols-3 p-4 bg-white rounded-lg shadow-inner">
         {results.map((result) => (
           <div 
             key={result.category} 
@@ -107,12 +135,18 @@ export const Results: React.FC<ResultsProps> = ({ results, onReset }) => {
         ))}
       </div>
       
-      <div className="text-center mt-12">
+      <div className="text-center mt-12 flex justify-center gap-4">
         <button
           onClick={onReset}
           className="px-8 py-3 rounded-full text-white font-medium bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105"
         >
           {t('reset_button')}
+        </button>
+        <button
+          onClick={handleExportPdf}
+          className="px-8 py-3 rounded-full text-white font-medium bg-gradient-to-r from-green-500 to-teal-500 shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 flex items-center gap-2"
+        >
+          <Download size={20} /> {t('export_pdf_button')}
         </button>
       </div>
     </div>

@@ -22,6 +22,7 @@
   "score_label": "Score",
   "condition_label": "Condition",
   "recommendation_label": "Recommendation",
+  "export_pdf_button": "Export to PDF",
   "question_1": "I find it difficult to feel happy about anything.",
   "question_2": "I feel hopeless about the future.",
   "question_3": "I feel unable to enjoy anything.",
